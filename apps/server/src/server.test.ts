@@ -908,8 +908,13 @@ const splitHeaderTokens = (value: string | null) =>
     .filter((token) => token.length > 0)
     .toSorted();
 
-const assertBrowserApiCorsHeaders = (headers: Headers) => {
-  assert.equal(headers.get("access-control-allow-origin"), "*");
+const assertBrowserApiCorsHeaders = (
+  headers: Headers,
+  expectedOrigin = crossOriginClientOrigin,
+) => {
+  assert.equal(headers.get("access-control-allow-origin"), expectedOrigin);
+  assert.equal(headers.get("access-control-allow-credentials"), "true");
+  assert.equal(headers.get("vary"), "Origin");
   assert.deepEqual(splitHeaderTokens(headers.get("access-control-allow-methods")), [
     "GET",
     "OPTIONS",
@@ -1116,6 +1121,7 @@ it.layer(NodeServices.layer)("server router seam", (it) => {
         fetch(sessionUrl, {
           headers: {
             cookie: setCookie?.split(";")[0] ?? "",
+            origin: crossOriginClientOrigin,
           },
         }),
       );
@@ -1125,6 +1131,7 @@ it.layer(NodeServices.layer)("server router seam", (it) => {
       };
 
       assert.equal(sessionResponse.status, 200);
+      assertBrowserApiCorsHeaders(sessionResponse.headers);
       assert.equal(sessionBody.authenticated, true);
       assert.equal(sessionBody.sessionMethod, "browser-session-cookie");
     }).pipe(Effect.provide(NodeHttpServer.layerTest)),
@@ -1881,7 +1888,9 @@ it.layer(NodeServices.layer)("server router seam", (it) => {
       });
 
       assert.equal(response.status, 204);
-      assert.equal(response.headers["access-control-allow-origin"], "*");
+      assert.equal(response.headers["access-control-allow-origin"], "http://localhost:5733");
+      assert.equal(response.headers["access-control-allow-credentials"], "true");
+      assert.equal(response.headers.vary, "Origin");
       assert.deepEqual(localTraceRecords, [
         {
           type: "otlp-span",
@@ -1947,7 +1956,9 @@ it.layer(NodeServices.layer)("server router seam", (it) => {
       );
 
       assert.equal(response.status, 204);
-      assert.equal(response.headers.get("access-control-allow-origin"), "*");
+      assert.equal(response.headers.get("access-control-allow-origin"), "http://localhost:5733");
+      assert.equal(response.headers.get("access-control-allow-credentials"), "true");
+      assert.equal(response.headers.get("vary"), "Origin");
       assert.deepEqual(splitHeaderTokens(response.headers.get("access-control-allow-methods")), [
         "GET",
         "OPTIONS",

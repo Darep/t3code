@@ -38,6 +38,7 @@ const MODE_ARGS = {
     "--filter=t3",
     "--parallel",
   ],
+  "dev:all": ["run", "dev", "--filter=t3", "--filter=@t3tools/web", "--parallel"],
   "dev:server": ["run", "dev", "--filter=t3"],
   "dev:web": ["run", "dev", "--filter=@t3tools/web"],
   "dev:desktop": ["run", "dev", "--filter=@t3tools/desktop", "--filter=@t3tools/web", "--parallel"],
@@ -156,6 +157,7 @@ export function createDevRunnerEnv({
     const webPort = BASE_WEB_PORT + webOffset;
     const resolvedBaseDir = yield* resolveBaseDir(t3Home);
     const isDesktopMode = mode === "dev:desktop";
+    const shouldConfigureBackendTarget = mode !== "dev:web" || port !== undefined;
 
     const output: NodeJS.ProcessEnv = {
       ...baseEnv,
@@ -166,11 +168,11 @@ export function createDevRunnerEnv({
       T3CODE_HOME: resolvedBaseDir,
     };
 
-    if (!isDesktopMode) {
+    if (!isDesktopMode && shouldConfigureBackendTarget) {
       output.T3CODE_PORT = String(serverPort);
       output.VITE_HTTP_URL = `http://localhost:${serverPort}`;
       output.VITE_WS_URL = `ws://localhost:${serverPort}`;
-    } else {
+    } else if (isDesktopMode) {
       output.T3CODE_PORT = String(serverPort);
       output.VITE_HTTP_URL = `http://${DESKTOP_DEV_LOOPBACK_HOST}:${serverPort}`;
       output.VITE_WS_URL = `ws://${DESKTOP_DEV_LOOPBACK_HOST}:${serverPort}`;
@@ -201,7 +203,7 @@ export function createDevRunnerEnv({
       delete output.T3CODE_LOG_WS_EVENTS;
     }
 
-    if (mode === "dev") {
+    if (mode === "dev" || mode === "dev:all") {
       output.T3CODE_MODE = "web";
       delete output.T3CODE_DESKTOP_WS_URL;
     }

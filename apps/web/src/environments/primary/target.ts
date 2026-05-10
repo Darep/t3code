@@ -1,12 +1,14 @@
 import type { DesktopEnvironmentBootstrap } from "@t3tools/contracts";
 import type { KnownEnvironment } from "@t3tools/client-runtime";
 
+import { isLoopbackHostname, rewriteLoopbackUrlHostToPageHost } from "../../lib/hostnames";
+
 export interface PrimaryEnvironmentTarget {
   readonly source: KnownEnvironment["source"];
   readonly target: KnownEnvironment["target"];
 }
 
-const LOOPBACK_HOSTNAMES = new Set(["127.0.0.1", "::1", "localhost"]);
+export { isLoopbackHostname };
 
 function getDesktopLocalEnvironmentBootstrap(): DesktopEnvironmentBootstrap | null {
   return window.desktopBridge?.getLocalEnvironmentBootstrap() ?? null;
@@ -25,25 +27,14 @@ function swapBaseUrlProtocol(
   return url.toString();
 }
 
-function normalizeHostname(hostname: string): string {
-  return hostname
-    .trim()
-    .toLowerCase()
-    .replace(/^\[(.*)\]$/, "$1");
-}
-
-export function isLoopbackHostname(hostname: string): boolean {
-  return LOOPBACK_HOSTNAMES.has(normalizeHostname(hostname));
-}
-
 function resolveHttpRequestBaseUrl(httpBaseUrl: string): string {
+  const currentUrl = new URL(window.location.href || window.location.origin);
+  const targetUrl = rewriteLoopbackUrlHostToPageHost(new URL(httpBaseUrl), currentUrl.hostname);
   const configuredDevServerUrl = import.meta.env.VITE_DEV_SERVER_URL?.trim();
   if (!configuredDevServerUrl) {
-    return httpBaseUrl;
+    return targetUrl.toString();
   }
 
-  const currentUrl = new URL(window.location.href);
-  const targetUrl = new URL(httpBaseUrl);
   const devServerUrl = new URL(configuredDevServerUrl, currentUrl.origin);
 
   const isCurrentOriginDevServer =
@@ -56,7 +47,7 @@ function resolveHttpRequestBaseUrl(httpBaseUrl: string): string {
     !isLoopbackHostname(currentUrl.hostname) ||
     !isLoopbackHostname(targetUrl.hostname)
   ) {
-    return httpBaseUrl;
+    return targetUrl.toString();
   }
 
   return currentUrl.origin;

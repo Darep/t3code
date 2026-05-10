@@ -174,9 +174,7 @@ const ComposerPendingUserInputCard = memo(function ComposerPendingUserInputCard(
               <div className="min-w-0 flex-1">
                 <span className="text-sm font-medium">{option.label}</span>
                 {option.description && option.description !== option.label ? (
-                  <span className="ml-2 text-xs text-muted-foreground/50">
-                    {option.description}
-                  </span>
+                  <span className="ml-2 text-xs text-muted-foreground">{option.description}</span>
                 ) : null}
               </div>
               {isSelected ? <CheckIcon className="size-3.5 shrink-0 text-blue-400" /> : null}

@@ -6,6 +6,8 @@ import * as Schedule from "effect/Schedule";
 import { RpcClient, RpcSerialization } from "effect/unstable/rpc";
 import * as Socket from "effect/unstable/socket/Socket";
 
+import { rewriteLoopbackUrlHostToPageHost } from "../lib/hostnames";
+
 import {
   acknowledgeRpcRequest,
   clearAllTrackedRpcRequests,
@@ -77,6 +79,7 @@ function resolveWsRpcSocketUrl(rawUrl: string): string {
     throw new Error(`Unsupported websocket transport URL protocol: ${resolved.protocol}`);
   }
 
+  rewriteLoopbackUrlHostToPageHost(resolved, window.location.hostname);
   resolved.pathname = "/ws";
   return resolved.toString();
 }

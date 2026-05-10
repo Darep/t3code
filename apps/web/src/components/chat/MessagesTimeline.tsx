@@ -377,7 +377,7 @@ function UserTimelineRow({ row }: { row: Extract<TimelineRow, { kind: "message" 
                 )}
                 {canRevertAgentWork && <RevertUserMessageButton messageId={row.message.id} />}
               </div>
-              <p className="text-right text-xs text-muted-foreground/50">
+              <p className="text-right text-xs text-muted-foreground">
                 {formatTimestamp(row.message.createdAt, ctx.timestampFormat)}
               </p>
             </>
